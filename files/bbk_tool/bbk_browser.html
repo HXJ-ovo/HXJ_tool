@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iframe网页嵌入工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .description {
+            color: #7f8c8d;
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+        
+        .url-input-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .url-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .url-input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .submit-btn {
+            padding: 15px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background: #2980b9;
+        }
+        
+        .iframe-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .iframe-header {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .current-url {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 70%;
+        }
+        
+        .iframe-content {
+            height: 600px;
+            position: relative;
+        }
+        
+        #preview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #ecf0f1;
+            color: #7f8c8d;
+        }
+        
+        .placeholder i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .iframe-content {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>iframe网页嵌入工具</h1>
+            <p class="description">输入任何网站的URL，即可在当前页面中嵌入显示。请注意，某些网站可能由于X-Frame-Options安全设置而无法嵌入。</p>
+        </header>
+        
+        <div class="url-input-container">
+            <h2>输入要嵌入的网页URL</h2>
+            <p style="color: #7f8c8d; margin: 15px 0; font-size: 0.9rem;">请输入完整的URL地址（包含https://或http://）</p>
+            <div class="input-group">
+                <input type="text" class="url-input" id="url-input" placeholder="例如: https://example.com">
+                <button class="submit-btn" id="submit-btn">嵌入网页</button>
+            </div>
+        </div>
+        
+        <div class="iframe-container">
+            <div class="iframe-header">
+                <span>网页预览</span>
+                <span class="current-url" id="current-url">当前未加载任何网页</span>
+            </div>
+            <div class="iframe-content">
+                <iframe id="preview-frame" src="about:blank" frameborder="0"></iframe>
+                <div class="placeholder" id="placeholder">
+                    <i>🔍</i>
+                    <p>输入URL并点击"嵌入网页"按钮开始预览</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 iframe网页嵌入工具 | 仅供教育目的</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('url-input');
+            const submitBtn = document.getElementById('submit-btn');
+            const previewFrame = document.getElementById('preview-frame');
+            const currentUrl = document.getElementById('current-url');
+            const placeholder = document.getElementById('placeholder');
+            
+            // 提交按钮点击事件
+            submitBtn.addEventListener('click', function() {
+                const url = urlInput.value.trim();
+                if (url) {
+                    loadUrl(url);
+                } else {
+                    alert('请输入有效的URL地址');
+                }
+            });
+            
+            // 按Enter键提交
+            urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitBtn.click();
+                }
+            });
+            
+            // 加载URL到iframe
+            function loadUrl(url) {
+                try {
+                    // 显示加载中
+                    currentUrl.textContent = `加载中: ${url}`;
+                    placeholder.style.display = 'flex';
+                    
+                    // 设置iframe的src
+                    previewFrame.src = url;
+                    
+                    // 监听iframe加载完成
+                    previewFrame.onload = function() {
+                        placeholder.style.display = 'none';
+                        currentUrl.textContent = `已加载: ${url}`;
+                    };
+                    
+                    // 处理加载错误
+                    previewFrame.onerror = function() {
+                        currentUrl.textContent = `加载失败: ${url}`;
+                        placeholder.style.display = 'flex';
+                        placeholder.innerHTML = '<i>❌</i><p>加载网页时出错，请检查URL是否正确</p>';
+                    };
+                } catch (e) {
+                    currentUrl.textContent = `错误: ${e.message}`;
+                    placeholder.style.display = 'flex';
+                    placeholder.innerHTML = '<i>❌</i><p>发生错误，无法加载网页</p>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
